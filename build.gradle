@@ -23,7 +23,7 @@ allprojects {
         google()
         jcenter()
         maven { url 'https://developer.huawei.com/repo/'}
-
+        maven { url "https://www.jitpack.io" }
         flatDir {
             dirs project(':common_component').file('libs')
             dirs project(':player_component').file('libs')

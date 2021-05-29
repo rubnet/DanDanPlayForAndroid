@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <import type="com.xyoye.stream_component.ui.activities.web_dav_image.WebDavImageViewModel" />
+
+        <variable
+            name="viewModel"
+            type="com.xyoye.stream_component.ui.activities.web_dav_image.WebDavImageViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/image_rv"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <ImageView
+            android:id="@+id/previous_iv"
+            android:layout_width="80dp"
+            android:layout_height="50dp"
+            android:layout_marginBottom="20dp"
+            android:background="#88000000"
+            android:onClick="@{ () -> viewModel.previousImageList()}"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:src="@drawable/ic_arrow_left_white"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible" />
+
+        <ImageView
+            android:id="@+id/next_iv"
+            android:layout_width="80dp"
+            android:layout_height="50dp"
+            android:layout_marginBottom="20dp"
+            android:background="#88000000"
+            android:onClick="@{ () -> viewModel.nextImageList()}"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:src="@drawable/ic_arrow_right_white"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

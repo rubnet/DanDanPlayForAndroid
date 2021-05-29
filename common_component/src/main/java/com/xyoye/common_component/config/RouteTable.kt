@@ -61,6 +61,7 @@ object RouteTable {
     object Stream {
         const val WebDavLogin = "/stream/web_dav_login"
         const val WebDavFile = "/stream/web_dav_file"
+        const val WebDavImage = "/stream/web_dav_image"
         const val FTPLogin = "/stream/ftp_login"
         const val FTPFile = "/stream/ftp_file"
         const val SmbLogin = "/stream/smb_login"

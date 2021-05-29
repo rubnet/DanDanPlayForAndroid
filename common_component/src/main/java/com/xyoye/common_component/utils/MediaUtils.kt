@@ -33,6 +33,11 @@ val supportSubtitleExtension = arrayOf(
     "ttml"
 )
 
+val supportImageExtension = arrayOf(
+    "jpg", "jpeg", "png", "heif",
+    "webp", "gif"
+)
+
 fun isVideoFile(filePath: String): Boolean {
     val extension = getFileExtension(filePath)
     return commonVideoExtension.contains(extension.toLowerCase(Locale.ROOT))
@@ -51,6 +56,11 @@ fun isDanmuFile(filePath: String): Boolean {
 fun isTorrentFile(filePath: String): Boolean {
     val extension = getFileExtension(filePath)
     return extension.toLowerCase(Locale.ROOT) == "torrent"
+}
+
+fun isImageFile(filePath: String): Boolean {
+    val extension = getFileExtension(filePath)
+    return supportImageExtension.contains(extension.toLowerCase(Locale.ROOT))
 }
 
 object MediaUtils {

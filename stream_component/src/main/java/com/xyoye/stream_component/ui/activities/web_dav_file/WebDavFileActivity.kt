@@ -20,6 +20,7 @@ import com.xyoye.stream_component.BR
 import com.xyoye.stream_component.R
 import com.xyoye.stream_component.databinding.ActivityWebDavFileBinding
 import com.xyoye.stream_component.databinding.ItemStorageFolderBinding
+import com.xyoye.stream_component.ui.activities.web_dav_image.ImageDataHolder
 
 @Route(path = RouteTable.Stream.WebDavFile)
 class WebDavFileActivity : BaseActivity<WebDavFileViewModel, ActivityWebDavFileBinding>() {
@@ -53,11 +54,20 @@ class WebDavFileActivity : BaseActivity<WebDavFileViewModel, ActivityWebDavFileB
         }
         viewModel.fileLiveData.observe(this) {
             dataBinding.fileRv.setData(it)
+            dataBinding.fileRv.postDelayed({
+                dataBinding.fileRv.smoothScrollToPosition(0)
+            }, 50)
         }
         viewModel.openVideoLiveData.observe(this) {
             ARouter.getInstance()
                 .build(RouteTable.Player.Player)
                 .withParcelable("playParams", it)
+                .navigation()
+        }
+        viewModel.openImageLiveData.observe(this) {
+            ImageDataHolder.imageParams = it
+            ARouter.getInstance()
+                .build(RouteTable.Stream.WebDavImage)
                 .navigation()
         }
         viewModel.listStorageRoot(webDavData!!)
@@ -133,10 +143,16 @@ class WebDavFileActivity : BaseActivity<WebDavFileViewModel, ActivityWebDavFileB
     }
 
     private fun openVideo(data: DavResource) {
-        if (isVideoFile(data.name)) {
-            viewModel.buildPlayParams(data)
-        } else {
-            ToastCenter.showWarning("不支持的视频文件格式")
+        when {
+            isVideoFile(data.name) -> {
+                viewModel.buildPlayParams(data)
+            }
+            isImageFile(data.name) -> {
+                viewModel.buildImageParams()
+            }
+            else -> {
+                ToastCenter.showWarning("不支持的文件格式")
+            }
         }
     }
 }

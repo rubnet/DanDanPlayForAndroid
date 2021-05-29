@@ -39,6 +39,9 @@
         <activity
             android:name=".ui.activities.smb_file.SmbFileActivity"
             android:configChanges="orientation|screenSize" />
+        <activity
+            android:name=".ui.activities.web_dav_image.WebDavImageActivity"
+            android:configChanges="orientation|screenSize" />
     </application>
 
 </manifest>

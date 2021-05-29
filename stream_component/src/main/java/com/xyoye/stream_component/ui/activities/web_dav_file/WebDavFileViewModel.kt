@@ -14,6 +14,7 @@ import com.xyoye.common_component.network.helper.UnsafeOkHttpClient
 import com.xyoye.common_component.utils.*
 import com.xyoye.common_component.weight.ToastCenter
 import com.xyoye.data_component.bean.FilePathBean
+import com.xyoye.data_component.bean.ImageParams
 import com.xyoye.data_component.bean.PlayParams
 import com.xyoye.data_component.entity.MediaLibraryEntity
 import com.xyoye.data_component.enums.MediaType
@@ -37,6 +38,7 @@ class WebDavFileViewModel : BaseViewModel() {
     val fileLiveData = MutableLiveData<MutableList<DavResource>>()
     val pathLiveData = MutableLiveData<MutableList<FilePathBean>>()
     val openVideoLiveData = MutableLiveData<PlayParams>()
+    val openImageLiveData = MutableLiveData<ImageParams>()
 
     private lateinit var sardine: OkHttpSardine
 
@@ -125,7 +127,7 @@ class WebDavFileViewModel : BaseViewModel() {
             //从播放历史查看是否已绑定弹幕
             val historyEntity = PlayHistoryUtils.getPlayHistory(url, MediaType.WEBDAV_SERVER)
 
-            if (historyEntity?.danmuPath != null){
+            if (historyEntity?.danmuPath != null) {
                 //从播放记录读取弹幕
                 playParams.danmuPath = historyEntity.danmuPath
                 playParams.episodeId = historyEntity.episodeId
@@ -136,11 +138,11 @@ class WebDavFileViewModel : BaseViewModel() {
                 DDLog.i("ftp danmu -----> download")
             }
 
-            if (historyEntity?.subtitlePath != null){
+            if (historyEntity?.subtitlePath != null) {
                 //从播放记录读取字幕
                 playParams.subtitlePath = historyEntity.subtitlePath
                 DDLog.i("ftp subtitle -----> database")
-            } else if (SubtitleConfig.isAutoLoadSubtitleNetworkStorage()){
+            } else if (SubtitleConfig.isAutoLoadSubtitleNetworkStorage()) {
                 //自动匹配同文件夹内同名字幕
                 playParams.subtitlePath = findAndDownloadSubtitle(davResource, header)
                 DDLog.i("ftp subtitle -----> download")
@@ -161,6 +163,51 @@ class WebDavFileViewModel : BaseViewModel() {
             openVideoLiveData.postValue(playParams)
         }
 
+    }
+
+    fun buildImageParams() {
+        showLoading()
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentDirPath = pathLiveData.value?.last()?.path
+            if (currentDirPath == null) {
+                hideLoading()
+                return@launch
+            }
+            val imageList = getTargetImages(currentDirPath)
+
+            val parentDirPath = getParentPath()
+            if (parentDirPath == null) {
+                val urls = mutableListOf<MutableList<String>>()
+                urls.add(imageList)
+                val params = ImageParams(
+                    credentials,
+                    urls,
+                    0
+                )
+                hideLoading()
+                openImageLiveData.postValue(params)
+                return@launch
+            }
+
+            val urls = mutableListOf<MutableList<String>>()
+            var dirPosition = 0
+            val childDirs = getChildDirs(parentDirPath)
+            for (path in childDirs) {
+                if (path == currentDirPath) {
+                    dirPosition = urls.size
+                    urls.add(imageList)
+                } else {
+                    urls.add(getTargetImages(path))
+                }
+            }
+            val params = ImageParams(
+                credentials,
+                urls,
+                dirPosition
+            )
+            hideLoading()
+            openImageLiveData.postValue(params)
+        }
     }
 
     private fun parseAddress(serverUrl: String): Boolean {
@@ -219,7 +266,61 @@ class WebDavFileViewModel : BaseViewModel() {
         }
     }
 
-    private suspend fun findAndDownloadDanmu(davResource: DavResource, header: Map<String, String>): String? {
+    private fun getParentPath(): String? {
+        val pathList = pathLiveData.value ?: return null
+        //当前目录已在根目录，退出
+        if (pathList.size < 2)
+            return null
+        val targetPath = pathList[pathList.size - 2].path
+        //目标是初次打开目录的父目录，退出
+        if (targetPath != rootPath && rootPath.startsWith(targetPath))
+            return null
+        return targetPath
+    }
+
+    private fun getChildDirs(parentPath: String): List<String> {
+        val fileList = sardine.list(addressUrl + parentPath)
+            .filter { it.isDirectory }
+            .filter { formatPath(it.path) != formatPath(parentPath) }
+            .toMutableList()
+
+        fileList.sortWith(FileComparator(
+            value = { it.name },
+            isDirectory = { true }
+        ))
+
+        return if (showHiddenFile) {
+            fileList.map { it.path }
+        } else {
+            fileList.filter { it.name.startsWith(".").not() }
+                .map { it.path }
+        }
+    }
+
+    private fun getTargetImages(dirPath: String): MutableList<String> {
+        val fileList = sardine.list(addressUrl + dirPath)
+            .filter { formatPath(it.path) != formatPath(dirPath) }
+            .toMutableList()
+
+        fileList.sortWith(FileComparator(
+            value = { it.name },
+            isDirectory = { it.isDirectory }
+        ))
+
+        return if (showHiddenFile) {
+            fileList.filter { isImageFile(it.name) }
+                .map { addressUrl + it.href.toASCIIString() }.toMutableList()
+        } else {
+            fileList.filter { isImageFile(it.name) }
+                .filter { it.name.startsWith(".").not() }
+                .map { addressUrl + it.href.toASCIIString() }.toMutableList()
+        }
+    }
+
+    private suspend fun findAndDownloadDanmu(
+        davResource: DavResource,
+        header: Map<String, String>
+    ): String? {
         return withContext(Dispatchers.IO) {
             //目标文件名
             val targetFileName = getFileNameNoExtension(davResource.name) + ".xml"
@@ -244,7 +345,10 @@ class WebDavFileViewModel : BaseViewModel() {
         }
     }
 
-    private suspend fun findAndDownloadSubtitle(davResource: DavResource, header: Map<String, String>): String? {
+    private suspend fun findAndDownloadSubtitle(
+        davResource: DavResource,
+        header: Map<String, String>
+    ): String? {
         return withContext(Dispatchers.IO) {
             //视频文件名
             val videoFileName = getFileNameNoExtension(davResource.name) + "."
@@ -269,8 +373,11 @@ class WebDavFileViewModel : BaseViewModel() {
         }
     }
 
-    private suspend fun matchAndDownloadDanmu(davResource: DavResource, header: HashMap<String, String>): Pair<String, Int>?{
-        return withContext(Dispatchers.IO){
+    private suspend fun matchAndDownloadDanmu(
+        davResource: DavResource,
+        header: HashMap<String, String>
+    ): Pair<String, Int>? {
+        return withContext(Dispatchers.IO) {
             val url = addressUrl + davResource.href.toASCIIString()
             var hash: String? = null
             try {
@@ -281,7 +388,7 @@ class WebDavFileViewModel : BaseViewModel() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-            if (hash.isNullOrEmpty()){
+            if (hash.isNullOrEmpty()) {
                 return@withContext null
             }
             return@withContext DanmuUtils.matchDanmuSilence(viewModelScope, davResource.name, hash)
