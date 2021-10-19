@@ -26,7 +26,7 @@ object PlayerInitializer {
         var pixelFormat = PixelFormat.PIXEL_AUTO
         var vlcPixelFormat = VLCPixelFormat.PIXEL_RGB_32
         var vlcHWDecode = VLCHWDecode.HW_ACCELERATION_AUTO
-        var videoSpeed = 25
+        var videoSpeed = 1f
     }
 
     object Danmu {

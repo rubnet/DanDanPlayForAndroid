@@ -6,7 +6,6 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.widget.LinearLayout
-import android.widget.SeekBar
 import androidx.core.view.ViewCompat
 import androidx.core.view.isGone
 import androidx.databinding.DataBindingUtil
@@ -29,7 +28,6 @@ import com.xyoye.player_component.R
 import com.xyoye.player_component.databinding.ItemSettingVideoParamsBinding
 import com.xyoye.player_component.databinding.ItemVideoTrackBinding
 import com.xyoye.player_component.databinding.LayoutSettingPlayerBinding
-import kotlin.math.max
 
 /**
  * Created by xyoye on 2020/11/14.
@@ -100,7 +98,7 @@ class SettingPlayerView(
     override fun attach(controlWrapper: ControlWrapper) {
         mControlWrapper = controlWrapper
         viewBinding.videoSpeedSb.postDelayed({
-            viewBinding.videoSpeedSb.progress = PlayerInitializer.Player.videoSpeed
+            viewBinding.videoSpeedSb.value = PlayerInitializer.Player.videoSpeed
         }, 200)
     }
 
@@ -188,42 +186,20 @@ class SettingPlayerView(
     }
 
     private fun initVideoSpeed() {
-        viewBinding.videoSpeedSb.apply {
-            max = 100
-            progress = 25
-            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(
-                    seekBar: SeekBar?,
-                    progress: Int,
-                    fromUser: Boolean
-                ) {
-                    PlayerConfig.putVideoSpeed(progress)
-                    PlayerInitializer.Player.videoSpeed = progress
+        viewBinding.videoSpeedSb.addOnChangeListener { _, value, _ ->
+            PlayerConfig.putNewVideoSpeed(value)
+            PlayerInitializer.Player.videoSpeed = value
 
-                    var speed = 4.0f * progress / 100f
-                    speed = max(0.25f, speed)
+            viewBinding.resetSpeedTv.isGone = value == 1f
 
-                    viewBinding.resetSpeedTv.isGone = speed == 1.0f
-
-                    val progressText = "$speed"
-                    viewBinding.videoSpeedTv.text = progressText
-                    mControlWrapper.setSpeed(speed)
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {
-
-                }
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {
-
-                }
-
-            })
+            val progressText = "$value"
+            viewBinding.videoSpeedTv.text = progressText
+            mControlWrapper.setSpeed(value)
         }
 
         viewBinding.videoSpeedTv.text = "1.0"
         viewBinding.resetSpeedTv.setOnClickListener {
-            viewBinding.videoSpeedSb.progress = 25
+            viewBinding.videoSpeedSb.value = 1f
         }
     }
 
