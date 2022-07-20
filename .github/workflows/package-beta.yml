@@ -23,10 +23,8 @@ jobs:
 
       # 3.获取签名密钥
       - name: decrypt key
-        run: |
-          gpg --quiet --batch --yes --decrypt \
-          --passphrase=${{ secrets.KEY_PASSPHRASE }} \
-          --output gradle/assemble/dandanplay.jks gradle/assemble/dandanplay.jks.gpg
+        run: mv gradle/assemble/debug.jks gradle/assemble/dandanplay.jks
+
 
       # 4.构建Beta包
       - name: assemb beta
@@ -55,14 +53,14 @@ jobs:
         continue-on-error: true
 
       # 7.如果测试版Tag已存在，删除
-      - name: delete old tag
-        if: steps.check_tag_exist.outputs.tag
-        uses: dev-drprasad/delete-tag-and-release@v0.2.0
-        with:
-          delete_release: true
-          tag_name: ${{ steps.check_tag_exist.outputs.tag }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#       - name: delete old tag
+#         if: steps.check_tag_exist.outputs.tag
+#         uses: dev-drprasad/delete-tag-and-release@v0.2.0
+#         with:
+#           delete_release: true
+#           tag_name: ${{ steps.check_tag_exist.outputs.tag }}
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # 8.获取APK版本信息
       - name: apk version info
@@ -72,28 +70,37 @@ jobs:
         with:
           apkPath: ${{ steps.apk_file_info.outputs.apk_path }}
 
+      - name: Upload build to action
+        if: steps.apk_file_info.outputs.apk_name && steps.apk_file_info.outputs.apk_path
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{steps.apk_file_info.outputs.apk_name}}
+          path: ${{steps.apk_file_info.outputs.apk_path}}
+          
       # 9.根据当前APK版本号，创建测试版Tag
-      - name: create github release
-        id: create_github_release
-        if: steps.apk_version_info.outputs.versionNum
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: dandanplay-v${{ steps.apk_version_info.outputs.versionNum }}-beta
-          draft: false
-          prerelease: true
-          body: |
-            最新测试包，与主分支代码同步
+#       - name: create github release
+#         id: create_github_release
+#         if: steps.apk_version_info.outputs.versionNum
+#         uses: actions/create-release@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           tag_name: dandanplay-v${{ steps.apk_version_info.outputs.versionNum }}-beta
+#           draft: false
+#           prerelease: true
+#           body: |
+#             最新测试包，与主分支代码同步
 
+        
       # 10.上传测试包到Github Release的Asset中
-      - name: upload release asset
-        if: steps.create_github_release.outputs.upload_url && steps.apk_file_info.outputs.apk_name && steps.apk_file_info.outputs.apk_path
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{steps.create_github_release.outputs.upload_url}}
-          asset_path: ${{steps.apk_file_info.outputs.apk_path}}
-          asset_name: ${{steps.apk_file_info.outputs.apk_name}}
-          asset_content_type: application/vnd.android.package-archive
+#       - name: upload release asset
+#         if: steps.create_github_release.outputs.upload_url && steps.apk_file_info.outputs.
+&& steps.apk_file_info.outputs.apk_path
+#         uses: actions/upload-release-asset@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           upload_url: ${{steps.create_github_release.outputs.upload_url}}
+#           asset_path: ${{steps.apk_file_info.outputs.apk_path}}
+#           asset_name: ${{steps.apk_file_info.outputs.apk_name}}
+#           asset_content_type: application/vnd.android.package-archive
