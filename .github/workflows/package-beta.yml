@@ -94,8 +94,7 @@ jobs:
         
       # 10.上传测试包到Github Release的Asset中
 #       - name: upload release asset
-#         if: steps.create_github_release.outputs.upload_url && steps.apk_file_info.outputs.
-&& steps.apk_file_info.outputs.apk_path
+#         if: steps.create_github_release.outputs.upload_url && steps.apk_file_info.outputs.apk_name && steps.apk_file_info.outputs.apk_path
 #         uses: actions/upload-release-asset@v1
 #         env:
 #           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
