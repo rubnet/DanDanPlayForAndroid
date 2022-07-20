@@ -4,7 +4,7 @@ import com.xyoye.common_component.extension.toMd5String
 import com.xyoye.common_component.source.base.VideoSourceFactory
 import com.xyoye.common_component.source.media.StreamMediaSource
 import com.xyoye.common_component.utils.PlayHistoryUtils
-import com.xyoye.player.utils.VideoLog
+import com.xyoye.common_component.utils.DDLog
 
 
 /**
@@ -19,7 +19,7 @@ object StreamSourceFactory {
         val uniqueKey = generateUniqueKey(videoUrl)
         val history = PlayHistoryUtils.getPlayHistory(uniqueKey, builder.mediaType)
 
-        VideoLog.d("StreamSourceFactory--create--> ${history.toString()}")
+        DDLog.i("StreamSourceFactory--create--> ${history.toString()}")
         return StreamMediaSource(
             builder.index,
             videoSources,
