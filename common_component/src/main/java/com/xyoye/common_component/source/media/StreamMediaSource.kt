@@ -4,6 +4,7 @@ import com.xyoye.common_component.source.base.BaseVideoSource
 import com.xyoye.common_component.source.base.VideoSourceFactory
 import com.xyoye.common_component.utils.getFileName
 import com.xyoye.data_component.enums.MediaType
+import java.net.URLDecoder 
 
 /**
  * Created by xyoye on 2021/11/21.
@@ -25,7 +26,7 @@ class StreamMediaSource(
     }
 
     override fun getVideoTitle(): String {
-        return getFileName(videoSources[index])
+        return URLDecoder.decode(getFileName(videoSources[index]), "UTF-8")
     }
 
     override fun getCurrentPosition(): Long {
